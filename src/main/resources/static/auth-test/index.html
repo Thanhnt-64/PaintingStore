@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Auth Test UI</title>
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; padding: 18px; background:#f7f7f7 }
+    .box { background: #fff; padding: 12px; margin:12px 0; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+    label { display:block; margin:6px 0 2px }
+    input { width:100%; padding:8px; margin-bottom:8px; box-sizing:border-box }
+    button { padding:8px 12px }
+    pre { background:#111; color:#0f0; padding:8px; overflow:auto }
+    .row { display:flex; gap:8px }
+  </style>
+</head>
+<body>
+  <h2>Auth Test UI</h2>
+  <p>Simple single-file UI to test backend auth endpoints. It stores JWT in <code>localStorage</code> under <code>auth_token</code>.</p>
+
+  <div class="box" id="registerBox">
+    <h3>Register</h3>
+    <label>Username</label>
+    <input id="reg_username" />
+    <label>Email</label>
+    <input id="reg_email" />
+    <label>Password</label>
+    <input id="reg_password" type="password" />
+    <button onclick="register()">Register (send OTP)</button>
+  </div>
+
+  <div class="box" id="confirmBox">
+    <h3>Confirm (Activate)</h3>
+    <label>Email</label>
+    <input id="conf_email" />
+    <label>OTP</label>
+    <input id="conf_otp" />
+    <button onclick="confirmOtp()">Confirm</button>
+  </div>
+
+  <div class="box" id="loginBox">
+    <h3>Login</h3>
+    <label>Username or Email</label>
+    <input id="login_user" />
+    <label>Password</label>
+    <input id="login_pass" type="password" />
+    <div class="row">
+      <button onclick="login()">Login</button>
+      <button onclick="showToken()">Show saved token</button>
+      <button onclick="clearToken()">Clear token</button>
+    </div>
+  </div>
+
+  <div class="box" id="logoutBox">
+    <h3>Logout</h3>
+    <button onclick="logout()">Logout (blacklist token)</button>
+  </div>
+
+  <div class="box" id="resetBox">
+    <h3>Password Reset</h3>
+    <label>Email (request reset)</label>
+    <input id="rst_email" />
+    <button onclick="resetRequest()">Request Reset (send OTP)</button>
+
+    <label>Verify OTP</label>
+    <input id="rst_verify_otp" />
+    <button onclick="resetVerify()">Verify OTP</button>
+
+    <label>Complete Reset - New Password</label>
+    <input id="rst_new_pass" type="password" />
+    <button onclick="resetComplete()">Complete Reset</button>
+  </div>
+
+  <div class="box">
+    <h3>Raw Response</h3>
+    <pre id="output">(responses appear here)</pre>
+  </div>
+
+  <script>
+    const base = '/api/auth';
+
+    function show(msg) {
+      const el = document.getElementById('output');
+      const t = typeof msg === 'string' ? msg : JSON.stringify(msg, null, 2);
+      el.textContent = t + '\n\n' + el.textContent;
+    }
+
+    function getToken() {
+      return localStorage.getItem('auth_token');
+    }
+
+    function saveToken(token) {
+      localStorage.setItem('auth_token', token);
+    }
+
+    function clearToken() {
+      localStorage.removeItem('auth_token');
+      show('token cleared');
+    }
+
+    async function sendRequest(path, method='POST', body=null, auth=true) {
+      const headers = { 'Content-Type': 'application/json' };
+      const token = getToken();
+      if (auth && token) headers['Authorization'] = 'Bearer ' + token;
+      try {
+        const resp = await fetch(base + path, {
+          method, headers,
+          body: body ? JSON.stringify(body) : undefined
+        });
+        let text;
+        try { text = await resp.text(); text = text ? JSON.parse(text) : null; } catch(e) { text = await resp.text(); }
+        show({ url: base+path, method: method, status: resp.status, headers: Object.fromEntries(resp.headers), body: text });
+        return { status: resp.status, body: text };
+      } catch(err) {
+        show({ error: err.toString() });
+        return { status: 0, body: null };
+      }
+    }
+
+    async function register() {
+      const username = document.getElementById('reg_username').value.trim();
+      const email = document.getElementById('reg_email').value.trim();
+      const password = document.getElementById('reg_password').value.trim();
+      
+      if (!username || !email || !password) {
+        show('Error: username, email, and password are required');
+        return;
+      }
+      
+      const body = { username, email, password };
+      show('Sending: ' + JSON.stringify(body));
+      await sendRequest('/register', 'POST', body, false);
+    }
+
+    async function confirmOtp() {
+      const email = document.getElementById('conf_email').value.trim();
+      const otp = document.getElementById('conf_otp').value.trim();
+      
+      if (!email || !otp) {
+        show('Error: email and OTP are required');
+        return;
+      }
+      
+      const body = { email, otp };
+      await sendRequest('/confirm', 'POST', body, false);
+    }
+
+    async function login() {
+      const usernameOrEmail = document.getElementById('login_user').value.trim();
+      const password = document.getElementById('login_pass').value.trim();
+      
+      if (!usernameOrEmail || !password) {
+        show('Error: username/email and password are required');
+        return;
+      }
+      
+      const body = { usernameOrEmail, password };
+      const r = await sendRequest('/login', 'POST', body, false);
+      if (r && r.body && r.body.token) {
+        saveToken(r.body.token);
+        show('✓ Token saved to localStorage');
+      }
+    }
+
+    function showToken() {
+      const t = getToken();
+      show({ token: t });
+    }
+
+    async function logout() {
+      await sendRequest('/logout', 'POST', null, true);
+      clearToken();
+    }
+
+    async function resetRequest() {
+      const email = document.getElementById('rst_email').value.trim();
+      
+      if (!email) {
+        show('Error: email is required');
+        return;
+      }
+      
+      const body = { email };
+      await sendRequest('/reset-request', 'POST', body, false);
+    }
+
+    async function resetVerify() {
+      const email = document.getElementById('rst_email').value.trim();
+      const otp = document.getElementById('rst_verify_otp').value.trim();
+      
+      if (!email || !otp) {
+        show('Error: email and OTP are required');
+        return;
+      }
+      
+      const body = { email, otp };
+      await sendRequest('/reset-verify', 'POST', body, false);
+    }
+
+    async function resetComplete() {
+      const email = document.getElementById('rst_email').value.trim();
+      const otp = document.getElementById('rst_verify_otp').value.trim();
+      const newPassword = document.getElementById('rst_new_pass').value.trim();
+      
+      if (!email || !otp || !newPassword) {
+        show('Error: email, OTP, and new password are required');
+        return;
+      }
+      
+      const body = { email, otp, newPassword };
+      await sendRequest('/reset-complete', 'POST', body, false);
+    }
+  </script>
+</body>
+</html>

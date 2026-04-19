@@ -1,0 +1,19 @@
+Spring Boot — framework chính để build REST API nhanh, config auto
+Spring MVC — xử lý routing, controller, request/response
+Spring Data JPA — thao tác DB qua ORM (repository)
+Hibernate — mapping object ↔ table, query DB
+Spring Security — auth, filter, bảo mật API
+JWT — access token (stateless auth)
+OAuth 2.0 — refresh token flow, chuẩn auth
+MySQL — lưu trữ dữ liệu chính
+Redis — cache, session, rate limit (optional)
+Apache Tomcat — runtime server (embedded trong Spring Boot)
+Nginx — reverse proxy, HTTPS, bảo mật
+Let's Encrypt — SSL miễn phí
+Certbot — auto cấp & renew SSL
+Docker — đóng gói app, deploy đồng nhất (optional)
+Maven — build project, manage dependency
+Git — quản lý source code
+UFW — mở/chặn port server
+Ubuntu — OS server
+Windows Subsystem for Linux — môi trường dev local
