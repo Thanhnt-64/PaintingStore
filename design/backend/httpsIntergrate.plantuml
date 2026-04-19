@@ -1,0 +1,35 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+actor Developer
+actor User
+
+' ================= DEV ENV =================
+node "WSL (Local Dev)" {
+    component "Nginx (Dev)"
+    component "Tomcat (Dev)"
+    database "MySQL (Dev)"
+}
+
+' ================= PROD ENV =================
+node "VPS / Cloud Server" {
+    component "Nginx (Reverse Proxy)"
+    component "Tomcat (App Server)"
+    database "MySQL (Production DB)"
+}
+
+' ================= FLOW =================
+
+Developer --> "WSL (Local Dev)" : code & test
+
+User --> "Nginx (Reverse Proxy)" : HTTPS Request
+"Nginx (Reverse Proxy)" --> "Tomcat (App Server)" : HTTP (internal)
+"Tomcat (App Server)" --> "MySQL (Production DB)" : query
+
+' ================= DEV FLOW =================
+
+"Nginx (Dev)" --> "Tomcat (Dev)"
+"Tomcat (Dev)" --> "MySQL (Dev)"
+
+@enduml

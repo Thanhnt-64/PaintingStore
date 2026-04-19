@@ -86,7 +86,7 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+	\n\t\t<dependency>\n\t\t\t<groupId>org.flywaydb</groupId>\n\t\t\t<artifactId>flyway-core</artifactId>\n\t\t</dependency>\n\t</dependencies>
 
 	<build>
 		<plugins>
@@ -142,3 +142,4 @@
 	</build>
 
 </project>
+

@@ -1,0 +1,109 @@
+@startuml
+!define primary_key(x) <b>x</b>
+!define foreign_key(x) <i>x</i>
+
+skinparam linetype ortho
+skinparam shadowing false
+skinparam entity {
+    BackgroundColor #F9F9F9
+    BorderColor #333
+}
+
+entity roles {
+    primary_key(role_id) : INT
+    role_name : VARCHAR
+}
+
+entity admins {
+    primary_key(admin_id) : INT
+    username : VARCHAR
+    password_hash : VARCHAR
+    foreign_key(role_id) : INT
+    created_at : DATETIME
+}
+
+entity artists {
+    primary_key(artist_id) : INT
+    name : VARCHAR
+    slug : VARCHAR
+    birth_year : INT
+    death_year : INT
+    biography : TEXT
+    nationality : VARCHAR
+    image_url : VARCHAR
+    created_at : DATETIME
+}
+
+entity categories {
+    primary_key(category_id) : INT
+    name : VARCHAR
+    slug : VARCHAR
+    foreign_key(parent_id) : INT
+}
+
+entity artworks {
+    primary_key(artwork_id) : INT
+    type : VARCHAR
+
+    foreign_key(artist_id) : INT
+    foreign_key(created_by) : INT
+
+    title : VARCHAR
+    slug : VARCHAR
+    year_created : INT
+    description : TEXT
+    price : DECIMAL
+
+    is_published : BIT
+    is_featured : BIT
+    view_count : INT
+
+    created_at : DATETIME
+    updated_at : DATETIME
+}
+
+entity artwork_images {
+    primary_key(image_id) : INT
+    foreign_key(artwork_id) : INT
+    image_url : VARCHAR
+    is_primary : BIT
+}
+
+entity artwork_categories {
+    foreign_key(artwork_id) : INT
+    foreign_key(category_id) : INT
+}
+
+entity events {
+    primary_key(event_id) : INT
+    title : VARCHAR
+    description : TEXT
+    start_date : DATETIME
+    end_date : DATETIME
+    image_url : VARCHAR
+}
+
+entity audit_logs {
+    primary_key(log_id) : INT
+    foreign_key(admin_id) : INT
+    action : VARCHAR
+    target_table : VARCHAR
+    target_id : INT
+    created_at : DATETIME
+}
+
+' ================= RELATIONSHIPS =================
+
+roles ||--o{ admins : has
+
+admins ||--o{ artworks : creates
+admins ||--o{ audit_logs : logs
+
+artists ||--o{ artworks : creates
+
+artworks ||--o{ artwork_images : has
+artworks ||--o{ artwork_categories : categorized_as
+
+categories ||--o{ artwork_categories : contains
+categories ||--o{ categories : parent_child
+@enduml
