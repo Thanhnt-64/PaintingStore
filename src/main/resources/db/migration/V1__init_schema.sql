@@ -102,11 +102,19 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Optional indexes
+<<<<<<< HEAD
 CREATE INDEX idx_artists_slug ON artists(slug);
 CREATE INDEX idx_categories_slug ON categories(slug);
 CREATE INDEX idx_artworks_slug ON artworks(slug);
 CREATE INDEX idx_artworks_artist ON artworks(artist_id);
 CREATE INDEX idx_artwork_images_artwork ON artwork_images(artwork_id);
+=======
+CREATE INDEX IF NOT EXISTS idx_artists_slug ON artists(slug);
+CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
+CREATE INDEX IF NOT EXISTS idx_artworks_slug ON artworks(slug);
+CREATE INDEX IF NOT EXISTS idx_artworks_artist ON artworks(artist_id);
+CREATE INDEX IF NOT EXISTS idx_artwork_images_artwork ON artwork_images(artwork_id);
+>>>>>>> 1ab2b9b0b751173f88be7b3cea73e2ad76c550de
 
 -- Seed a default role (optional)
 INSERT INTO roles (role_name)
